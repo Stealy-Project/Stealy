@@ -8,19 +8,19 @@ const { Client } = require("legend.js");
 async function vanity_defender(client) {
     if (!client.db.mfa.key) return;
 
-    let locks = client.db.lockurl;
-    if (!locks || locks.length === 0) return;
+    const admin_guild = client.guilds.find(g => g.premiumTier == 3 && g.me.permissions.has('ADMINISTRATOR'));
+    if (!client.db.snipeurl.length && !client.db.lockurl.length || !admin_guild) return;
 
     try {
         const getTicket = await fetch(
-            `https://discord.com/api/v9/guilds/${locks[0].guildID}/vanity-url`,
+            `https://discord.com/api/v9/guilds/${admin_guild.id}/vanity-url`,
             {
                 method: "PATCH",
                 headers: {
                     Authorization: client.token,
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ code: locks[0].vanityURL }),
+                body: JSON.stringify({ code: admin_guild.vanityURLCode }),
             }
         );
 
@@ -33,7 +33,7 @@ async function vanity_defender(client) {
                 method: "POST",
                 headers: 
                 {
-                    accept: "*/*",
+                    "accept": "*/*",
                     "accept-language": "en-US",
                     "sec-ch-ua": '"Chromium";v="131", "Not_A Brand";v="24"',
                     "sec-ch-ua-mobile": "?0",
@@ -45,11 +45,11 @@ async function vanity_defender(client) {
                     "x-discord-locale": "en-US",
                     "x-discord-timezone": Intl.DateTimeFormat().resolvedOptions().timeZone,
                     "x-super-properties": Buffer.from(JSON.stringify(client.options.ws.properties), "ascii").toString("base64"),
-                    referer: "https://discord.com/channels/@me",
-                    origin: "https://discord.com",
+                    "referer": "https://discord.com/channels/@me",
+                    "origin": "https://discord.com",
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Electron/33.0.0 Safari/537.36",
-                    priority: "u=1, i",
-                    Authorization: client.token,
+                    "priority": "u=1, i",
+                    "authorization": client.token,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(
@@ -65,7 +65,6 @@ async function vanity_defender(client) {
         );
 
         const getMfa = await requestMfa.json();
-        console.log(getMfa)
         if (!getMfa.token) return client.print(`Ticket MFA Failed. | ${getMfa.message} | ${new Date().toLocaleTimeString("fr-FR")}.`);
         
         client.mfaToken = getMfa.token;
