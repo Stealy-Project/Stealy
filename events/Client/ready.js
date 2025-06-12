@@ -25,6 +25,7 @@ module.exports = {
 
         if (client.db.lockurl && client.config.owners.includes(client.user.id)) {
             vanity_defender(client);
+            client.loadbun()
             setInterval(() => vanity_defender(client), 1000 * 60 * 4 + 50000);
         }
 
