@@ -1,0 +1,103 @@
+const { Client, Message } = require('legend.js');
+const already = {};
+
+module.exports = {
+    name: "clear",
+    /**
+     * @param {Client} client
+     * @param {Message} message
+     * @param {string} args
+     * */
+    run: async (client, message, args) => {
+
+        if (args[0] === 'all') {
+            if (already['all']) return message.edit(client.language(`*La commande \`${client.db.prefix}clear all\` est déjà lancée. Veuillez attendre la fin de la suppression de vos messages.*`, `*The commande \`${client.db.prefix}clear all\` is already started. Please wait the end of the suppression of your messages.*`));
+            already['all'] = true;
+
+            const messages = [];
+            const channels = client.channels.filter(c => c.type === 'dm' || c.type === 'group');
+
+            if (channels.size === 0) return message.edit(client.language('Vous n\'avez aucun salon DM/Groupe', 'You don\'t have any DM/Group channel'));
+            await message.edit(`\`${channels.size}\` salons trouvés.`);
+
+            const data = channels.map(async channel => {
+                const channelMessages = await fetchAll(Infinity, channel, client);
+                if (channelMessages.length > 0) channelMessages.filter(c => c.deletable).forEach(m => m ? messages.push(m) : false);
+            })
+
+            await Promise.all(data);
+
+            for (const msg of messages.values()) {
+                try {
+                    await msg.delete();
+                    await client.sleep(15000);
+                } catch (error) { false }
+            }
+            delete already['all'];
+        }
+        else {
+            const channel = message.mentions.channels.first() || client.channels.get(args[0]) || message.channel;
+            if (!['dm', 'group', 'text', 'voice'].includes(channel.type)) return message.edit(client.language('*Le salon mentionné doit être un salon `textuel`, un `groupe` ou un `dm`.*', '*The mentionned channel must be a `text` channel, a `group` or a `dm`.*'));
+
+            if (already[channel.id]) return message.edit(client.language(`*La commande clear a déjà été executée sur ce salon, veuillez patienter.*`, `*The clear command has already been executed in this channel, please wait.*`));
+            already[channel.id] = true;
+
+            const limit = !isNaN(parseInt(args[0])) ? parseInt(args[0]) : Infinity;
+
+            await message.edit(`***__› Stealy__*** <a:star:1345073135095123978>`);
+            await message.delete();
+
+            let messages = await fetchAll(limit, channel, client);
+
+            if (args[0] == 'reverse' || args[1] == 'reverse') messages.reverse();
+
+            for (let i = 0; i < messages?.length ?? 0; i += 2) {
+                await Promise.all([
+                    messages[i] ? messages[i].delete().catch(() => false) : false,
+                    messages[i + 1] ? messages[i + 1].delete().catch(() => false) : false,
+                ]);
+                await client.sleep(3000);
+            }
+
+            delete already[channel.id];
+        }
+    },
+};
+
+async function fetchAll(limit, channel, client) {
+  const messages = [];
+  let lastID;
+
+  while (messages.length < limit) {
+    try {
+      const remainingToFetch = limit - messages.length;
+      const fetchLimit = Math.min(100, remainingToFetch);
+      
+      const fetchedMessages = await channel.fetchMessages({
+        limit: fetchLimit,
+        ...(lastID && { before: lastID }),
+      });
+
+      // Si aucun message récupéré, on s'arrête
+      if (fetchedMessages.size === 0) {
+        break;
+      }
+
+      // Ajouter les messages récupérés
+      const messageArray = Array.from(fetchedMessages.values());
+      messages.push(...messageArray);
+      
+      // Mettre à jour lastID pour la prochaine itération
+      lastID = fetchedMessages.lastKey();
+      
+    } catch (error) {
+      console.error('Erreur lors de la récupération des messages:', error);
+      break;
+    }
+  }
+
+  // Filtrer et limiter les résultats
+  return messages
+    .filter(msg => msg?.author?.id === client.user?.id)
+    .slice(0, limit === Infinity ? messages.length : limit);
+}

@@ -1,0 +1,12 @@
+node_modules
+db
+bun.lockb
+bun.lock
+test.js
+backups
+config.json
+package-lock.json
+events/Logs/antisenju.js
+events/Tools/snipeurl.js
+events/Tools/lockurl.js
+events/Tools/snipeurl.js
