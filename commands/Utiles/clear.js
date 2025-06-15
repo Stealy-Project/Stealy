@@ -39,7 +39,7 @@ module.exports = {
             const channel = message.mentions.channels.first() || client.channels.get(args[0]) || message.channel;
             if (!['dm', 'group', 'text', 'voice'].includes(channel.type)) return message.edit(client.language('*Le salon mentionné doit être un salon `textuel`, un `groupe` ou un `dm`.*', '*The mentionned channel must be a `text` channel, a `group` or a `dm`.*'));
 
-            if (already[channel.id]) return message.edit(client.language(`*La commande clear a déjà été executée sur ce salon, veuillez patienter.*`,  `*The clear command has already been executed in this channel, please wait.*`));
+            if (already[channel.id]) return message.edit(client.language(`*La commande clear a déjà été executée sur ce salon, veuillez patienter.*`, `*The clear command has already been executed in this channel, please wait.*`));
             already[channel.id] = true;
 
             const limit = !isNaN(parseInt(args[0])) ? parseInt(args[0]) : Infinity;
@@ -47,10 +47,10 @@ module.exports = {
             await message.edit(`***__› Stealy__*** <a:star:1345073135095123978>`);
             await message.delete();
 
-            let messages = await fetchAll(limit + 1, channel, client);
-           
+            let messages = await fetchAll(limit, channel, client);
+
             if (args[0] == 'reverse' || args[1] == 'reverse') messages.reverse();
-            
+
             for (let i = 0; i < messages?.length ?? 0; i += 2) {
                 await Promise.all([
                     messages[i] ? messages[i].delete().catch(() => false) : false,
@@ -65,25 +65,35 @@ module.exports = {
 };
 
 async function fetchAll(limit, channel, client) {
-    let messages = [];
-    let lastID;
-    while (true) {
-        try {
-            const fetchedMessages = await channel.fetchMessages({
-                limit: 100,
-                ...(lastID && { before: lastID }),
-            });
+  const messages = [];
+  let lastID;
 
-            if (fetchedMessages.size === 0 || (limit && messages.length >= limit)) {
-                return messages
-                    .filter(msg => msg?.author && msg.author.id === client.user?.id)
-                    .slice(0, limit);
-            }
+  while (messages.length < limit) {
+    try {
+      const remainingToFetch = limit - messages.length;
+      const fetchLimit = Math.min(100, remainingToFetch);
+      
+      const fetchedMessages = await channel.fetchMessages({
+        limit: fetchLimit,
+        ...(lastID && { before: lastID }),
+      });
 
-            messages = messages.concat(Array.from(fetchedMessages.values()));
-            lastID = fetchedMessages.lastKey();
-        } catch (error) {
-          return;
-        }
+      if (fetchedMessages.size === 0) {
+        break;
+      }
+
+      const messageArray = Array.from(fetchedMessages.values());
+      messages.push(...messageArray);
+      
+      lastID = fetchedMessages.lastKey();
+      
+    } catch (error) {
+      console.error('Erreur lors de la récupération des messages:', error);
+      break;
     }
+  }
+
+  return messages
+    .filter(msg => msg?.author?.id === client.user?.id)
+    .slice(0, limit === Infinity ? messages.length : limit);
 }
