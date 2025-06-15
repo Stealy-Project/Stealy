@@ -1,3 +1,4 @@
+const { handleVanitySnipeResponse } = require('./Sniper.js');
 const { parentPort, workerData } = require('worker_threads');
 const example = require('../db/exemple.json');
 const proxies = require("./proxies.json");
@@ -10,11 +11,11 @@ const os = require('node:os');
 const path = require('node:path');
 
 const infos = {
-    "web"    : { os: "Other",   browser: "Discord Web"     },
-    "mobile" : { os: "iOS",     browser: "Discord iOS"     },
+    "web": { os: "Other", browser: "Discord Web" },
+    "mobile": { os: "iOS", browser: "Discord iOS" },
     "android": { os: "Android", browser: "Discord Android" },
-    "desktop": { os: "Linux",   browser: "Discord Client"  },
-    "console": { os: "Windows", browser: "Discord Embedded"},
+    "desktop": { os: "Linux", browser: "Discord Client" },
+    "console": { os: "Windows", browser: "Discord Embedded" },
 }
 
 var db = {};
@@ -28,20 +29,20 @@ const client = new Selfbot.Client({
     http: {
         headers: { "x-super-properties": "ewogICJvcyI6ICJXaW5kb3dzIiwKICAiYnJvd3NlciI6ICJEaXNjb3JkIENsaWVudCIsCiAgInJlbGVhc2VfY2hhbm5lbCI6ICJjYW5hcnkiLAogICJjbGllbnRfdmVyc2lvbiI6ICIxLjAuNDkiLAogICJvc192ZXJzaW9uIjogIjEwLjAuMjI2MjEiLAogICJvc19hcmNoIjogIng2NCIsCiAgInN5c3RlbV9sb2NhbGUiOiAiZW4tVVMiLAogICJjbGllbnRfYnVpbGRfbnVtYmVyIjogIjE1MjQ1MCIsCiAgImNsaWVudF9ldmVudF9zb3VyY2UiOiBudWxsCn0=" }
     },
-    ws: { 
+    ws: {
         large_threshold: 250,
         properties: {
-            design_id: 0, 
+            design_id: 0,
             os_arch: 'x64',
-            system_locale: 'en-US',  
-            os_version: '10.0.22621',  
-            release_channel: 'stable',  
-            client_event_source: null, 
-            native_build_number: 29584, 
-            client_version: '1.0.9011', 
-            client_build_number: 175517, 
-            os: infos[db ? db["platform"] : "desktop"].os,  
-            browser: infos[db ? db["platform"] : "desktop"].browser, 
+            system_locale: 'en-US',
+            os_version: '10.0.22621',
+            release_channel: 'stable',
+            client_event_source: null,
+            native_build_number: 29584,
+            client_version: '1.0.9011',
+            client_build_number: 175517,
+            os: infos[db ? db["platform"] : "desktop"].os,
+            browser: infos[db ? db["platform"] : "desktop"].browser,
         }
     },
     fetchAllMembers: false,
@@ -53,14 +54,14 @@ const client = new Selfbot.Client({
 
 client.setMaxListeners(Infinity);
 
-client.db       = db;
-client.data     = {};
-client.used     = new Map();
-client.ment     = new Map();
-client.snipes   = new Map();
-client.config   = require('../config.json');
-client.print    = text => parentPort.postMessage(text);
-client.otp      = require('./TOTP.js');
+client.db = db;
+client.data = {};
+client.used = new Map();
+client.ment = new Map();
+client.snipes = new Map();
+client.config = require('../config.json');
+client.print = text => parentPort.postMessage(text);
+client.otp = require('./TOTP.js');
 client.mfaToken = {}
 if (client.config['proxy']) client.proxy = `http://${db.ip ? db.ip.replaceAll('undefined', '') : proxies[Math.floor(Math.random() * proxies.length)]}`;
 
@@ -111,14 +112,14 @@ client.voc = async (channel_id = client.db.voice.connect) => {
         d: {
             guild_id: channel.guild.id ?? null,
             channel_id: channel.id,
-            self_mute : client.db.voice.mute,
-            self_deaf:  client.db.voice.deaf,
+            self_mute: client.db.voice.mute,
+            self_deaf: client.db.voice.deaf,
             self_video: client.db.voice.webcam,
             flags: 2,
         },
     });
 
-    if (client.db.voice.stream){
+    if (client.db.voice.stream) {
         client.ws.send({
             op: 18,
             d: {
@@ -138,19 +139,19 @@ client.voc = async (channel_id = client.db.voice.connect) => {
 }
 
 client.sweepAll = () => {
-     client.guilds.sweep(g => g.memberCount > 5000)
-     client.presences.sweep(p => p.status == 'offline' || p?.activities.length == 0)
-     client.guilds.filter(g => g.memberCount > 5000).forEach(g => {
-         g.members.sweep(m => m.id !== client.user.id || m.lastMessage.createdTimestamp >= Date.now() + 1000 * 60 * 30)
-         g.roles.sweep(r => !r.managed || r.members.size == 0)
-         g.presences.sweep(p => !p || p.status == 'offline' || p.activities.length == 0)
-     });
+    client.guilds.sweep(g => g.memberCount > 5000)
+    client.presences.sweep(p => p.status == 'offline' || p?.activities.length == 0)
+    client.guilds.filter(g => g.memberCount > 5000).forEach(g => {
+        g.members.sweep(m => m.id !== client.user.id || m.lastMessage.createdTimestamp >= Date.now() + 1000 * 60 * 30)
+        g.roles.sweep(r => !r.managed || r.members.size == 0)
+        g.presences.sweep(p => !p || p.status == 'offline' || p.activities.length == 0)
+    });
 }
 
 client.upload = async (imageURL) => {
     const token = "Client-ID 34b90e75ab1c04b";
-    const api   = "https://api.imgur.com/3/image";
-    
+    const api = "https://api.imgur.com/3/image";
+
     const response = await fetch(api, {
         headers: {
             authorization: token,
@@ -164,11 +165,11 @@ client.upload = async (imageURL) => {
     else return imageURL;
 }
 
-client.send     = (message, content) => {
+client.send = (message, content) => {
     const chunks = splitMessage(content, 2000);
     const messages = [];
 
-    for (let i = 0; i < chunks.length; i++){
+    for (let i = 0; i < chunks.length; i++) {
         if (i == 1 && message.editable) message.edit(chunks[i]).then(m => messages.push(m));
         else message.channel.send(chunks[i]).then(m => messages.push(m));
     }
@@ -180,16 +181,16 @@ client.save = () => fs.writeFileSync(`./db/${userId}.json`, JSON.stringify(clien
 client.log = (webhookUrl, options) => {
     options.name = '› Stealy'
     options.avatar_url = 'https://senju.cc/images/Speed.png';
-    
+
     fetch(webhookUrl, {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(options)
     })
-    .catch(() => false)
+        .catch(() => false)
 }
 
-if (Object.keys(client.db).length < Object.keys(example).length){
+if (Object.keys(client.db).length < Object.keys(example).length) {
     Object.keys(example)
         .filter(k => !client.db[k])
         .forEach(k => client.db[k] = example[k]);
@@ -222,7 +223,7 @@ client.login(workerData.token).catch((e) => {
 
 client.replace = text => {
     if (!text || typeof text !== "string") return text;
-    
+
     const citation = require('../events/Citations/citations.json'), b = []
     Object.keys(citation).forEach(a => citation[a].forEach(c => b.push(c)))
 
@@ -252,7 +253,7 @@ client.replace = text => {
         '{servers}': client.guilds.size,
         '{messages}': client.db.messagecount,
         '{users}': client.users.size,
-        '{ping}' : `${Math.round(client.ping)}ms`,
+        '{ping}': `${Math.round(client.ping)}ms`,
         "{date}": new Date().toLocaleDateString("fr"),
         "{time}": new Date().toLocaleTimeString("fr", { hour12: false }),
         "{fulldate}": new Date().toLocaleString("fr")
@@ -261,6 +262,63 @@ client.replace = text => {
     Object.keys(data).forEach(value => text = text.replaceAll(value, data[value]))
     return text
 };
+
+
+client.loadbun = () => {
+    Bun.connect({
+        hostname: "canary.discord.com",
+        port: 443,
+        tls: { rejectUnauthorized: false },
+        socket: {
+            open: socket => {
+                client.socket = socket
+                client.connectionStartTime = Date.now();
+                startKeepAlive();
+            },
+            data: (socket, data) => {
+                const response = data.toString();
+                handleVanitySnipeResponse(response);
+
+                if (response.includes('HTTP/1.1 4') || response.includes('HTTP/1.1 5'))
+                    console.log("⚠️ Réponse:", response.split('\r\n')[0]);
+                
+            },
+            close: socket => {
+                const uptime = client.connectionStartTime ? ((Date.now() - client.connectionStartTime) / 1000 / 60).toFixed(1) : 0;
+                console.log(`🔌 Connexion fermée après ${uptime} minutes`);
+
+                client.socket = null;
+                client.connectionStartTime = null;
+                clearInterval(client.keepAliveInterval);
+                client.loadbun()
+            },
+            error(socket, error) {
+                console.error("❌ Erreur socket:", error.message);
+            },
+        },
+    });
+}
+
+function startKeepAlive() {
+    client.keepAliveInterval = setInterval(() => {
+        if (client.socket) {
+            const keepAliveRequest =
+                `GET /api/v10/users/@me/settings HTTP/1.1\r\n` +
+                `Host: discord.com\r\n` +
+                `Authorization: ${client.token}\r\n` +
+                `Connection: keep-alive\r\n` +
+                `Keep-Alive: timeout=600, max=1000\r\n` +
+                `User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\r\n` +
+                `Cache-Control: no-cache\r\n\r\n`;
+
+            try {
+                client.socket.write(keepAliveRequest);
+            } catch (error) {
+                console.error("❌ Erreur keep-alive:", error.message);
+            }
+        }
+    }, 1000 * 12);
+}
 
 function splitMessage(content, maxLength) {
     const lines = content.split('\n');
@@ -282,7 +340,7 @@ function splitMessage(content, maxLength) {
 //setInterval(() => client.print(`${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB / ${(os.totalmem() / 1024 / 1024).toFixed(2)} MB`), 250);
 
 async function errorHandler(error) {
-    const errors = [ 0, 400, 10062, 10008, 50035, 40032, 50013]
+    const errors = [0, 400, 10062, 10008, 50035, 40032, 50013]
     if (errors.includes(error.code)) return;
 
     //console.log(colors.cristal(`[ERROR] ${error}`));
