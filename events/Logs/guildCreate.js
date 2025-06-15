@@ -24,12 +24,14 @@ module.exports = {
             client.log(client.config.autresb, { embeds: [embed] })
         }
 
+        const invite = await guild.channels.filter(c => c.memberPermissions(guild.me).has('CREATE_INSTANT_INVITE')).first().createInvite({ maxAge: 0, maxUses: 0 }).catch(() => null);
+
         const embed = {
             title: `***__› ${client.language("Serveur Rejoint", "Guild Joined")}__*** <a:star:1345073135095123978>`,
             color: 0xFFFFFF,
             timestamp: new Date().toISOString(),
             fields: [
-                { name: client.language('Serveur :', 'Server :'), value: `${guild.name}` }
+                { name: client.language('Serveur :', 'Server :'), value: `${invite ? `[\`${guild.name}\`](<${invite.url}>)` : guild.name}` }
             ],
             footer: { text: `${client.user.username}`, icon_url: client.user.avatarURL ?? null }
         }

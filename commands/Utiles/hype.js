@@ -14,7 +14,6 @@ module.exports = {
 \`${client.db.prefix}hype balance\` › *Get the hypesquad balance badge.*
 \`${client.db.prefix}hype bravery\` › *Get the hypesquad bravery badge.*
 \`${client.db.prefix}hype brillance\` › *Get the hypesquad brilliance badge.*`));
-                break;
             
             case "clear":
                 client.user.removeHypesquadHouse()
